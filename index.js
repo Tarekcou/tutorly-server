@@ -15,7 +15,8 @@ app.use(
       "https://online-tutor-2c707.firebaseapp.com",
     ],
     credentials: true,
-  }))
+  })
+);
 // app.use(cors());
 
 app.use(express.json());
@@ -158,6 +159,13 @@ async function run() {
       //   },
       // };
       // const updateResult = await tutorCollection.updateOne(filter, updateTutor);
+      res.send(result);
+    });
+    app.delete("/remove-booked-tutorials/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await bookedTutorCollection.deleteOne(query);
+      // console.log(result);
       res.send(result);
     });
 
