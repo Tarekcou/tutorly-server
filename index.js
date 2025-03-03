@@ -52,8 +52,10 @@ async function run() {
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
     const database = client.db("tutorDB");
-    const tutorCollection = database.collection("tutor");
+    const tutorialCollections = database.collection("tutorials");
     const bookedTutorCollection = database.collection("bookedTutor");
+    const tutorCollections = database.collection("tutors");
+    const usersCollection = database.collection("users");
 
     app.post("/jwt", (req, res) => {
       const user = req.body;
@@ -80,7 +82,7 @@ async function run() {
     });
 
     app.get("/tutorials", async (req, res) => {
-      const cursor = tutorCollection.find();
+      const cursor = tutorialCollections.find();
       const result = await cursor.toArray();
       res.send(result);
     });
@@ -89,7 +91,7 @@ async function run() {
       // console.log("language: " + language);
       const query = { language: language };
       const option = { upsert: false };
-      const cursor = tutorCollection.find(query, option);
+      const cursor = tutorialCollections.find(query, option);
       // console.log(cursor);
       const result = await cursor.toArray();
       // console.log(result);
@@ -99,22 +101,21 @@ async function run() {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const option = { upsert: false };
-      const cursor = tutorCollection.find(query, option);
+      const cursor = tutorialCollections.find(query, option);
       // (cursor);
       const result = await cursor.toArray();
-      result;
       res.send(result);
     });
     app.get("/myTutorials/:myEmail", async (req, res) => {
       const myEmail = req.params.myEmail;
       const query = { email: myEmail };
-      console.log(req);
+      // console.log(query);
       // if (req.user.email !== req.query.email) {
       //   return res.status(403).send({ message: "forbidded  access" });
       // }
-      const cursor = tutorCollection.find(query);
+      const cursor = tutorialCollections.find(query);
       const result = await cursor.toArray();
-      console.log(result);
+      // console.log(result);
       res.send(result);
     });
     app.get("/booked-tutors/:myEmail", async (req, res) => {
@@ -127,14 +128,14 @@ async function run() {
     app.get("/products/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
-      const result = await tutorCollection.findOne(query);
+      const result = tutorialCollections.findOne(query);
 
       res.send(result);
     });
     app.post("/add-tutorials", async (req, res) => {
       const product = req.body;
       // (product);
-      const result = await tutorCollection.insertOne(product);
+      const result = tutorialCollections.insertOne(product);
       res.send(result);
     });
 
@@ -144,7 +145,7 @@ async function run() {
       const result = await bookedTutorCollection.insertOne(tutorial);
       // const id = tutorial.tutorId;
       // const query = { _id: new ObjectId(id) };
-      // const tutor = tutorCollection.findOne(query);
+      // const tutor =tutorialCollections.findOne(query);
       // const newCount = 0;
       // if (tutor.tutorCount) {
       //   newCount = tutor.tutorCount + 1;
@@ -158,7 +159,7 @@ async function run() {
       //     tutorCount: newCount,
       //   },
       // };
-      // const updateResult = await tutorCollection.updateOne(filter, updateTutor);
+      // const updateResult = awaittutorialCollections.updateOne(filter, updateTutor);
       res.send(result);
     });
     app.delete("/remove-booked-tutorials/:id", async (req, res) => {
@@ -177,7 +178,7 @@ async function run() {
       const query = { _id: new ObjectId(id) };
       // console.log(query2);
 
-      const tutor = await tutorCollection.findOne(query);
+      const tutor = tutorialCollections.findOne(query);
       // console.log(id, tutor);
       let newCount = 0;
       if (tutor.review) {
@@ -197,7 +198,7 @@ async function run() {
         },
       };
       // console.log(updateTutor);
-      const updateResult = await tutorCollection.updateOne(filter, updateTutor);
+      const updateResult = tutorialCollections.updateOne(filter, updateTutor);
       const updateResult2 = await bookedTutorCollection.updateOne(
         filter2,
         updateTutor
@@ -207,7 +208,7 @@ async function run() {
     app.delete("/tutorials/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
-      const result = await tutorCollection.deleteOne(query);
+      const result = tutorialCollections.deleteOne(query);
       // console.log(result);
       res.send(result);
     });
@@ -231,14 +232,101 @@ async function run() {
         },
       };
 
-      const result = await tutorCollection.updateOne(
-        query,
-        newTutorials,
-        option
-      );
+      const result = tutorialCollections.updateOne(query, newTutorials, option);
       console.log(result);
       res.send(result);
     });
+
+    // Become a tutor
+    app.post("/tutors", async (req, res) => {
+      const becomeATutor = req.body;
+      const result = await tutorCollections.insertOne(becomeATutor);
+      res.send(result);
+    });
+    app.get("/tutors", async (req, res) => {
+      const cursor = tutorCollections.find();
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+    app.get("/tutors/:email", async (req, res) => {
+      const email = req.params?.email;
+      if (email) {
+        const query = { email: email };
+
+        const result = await tutorCollections.findOne(query);
+        res.send(result);
+      } else {
+        const result = await tutorCollections.findOne();
+        res.send(result);
+      }
+    });
+    app.put("/tutors/:id", async (req, res) => {
+      const id = req.params.id;
+      // console.log(id);
+      const query = { _id: new ObjectId(id) };
+      const option = { upsert: false };
+      const isTutor = req.body.isTutor;
+      // console.log(isTutor);
+      const newTutors = {
+        $set: {
+          isTutor,
+        },
+      };
+
+      const result = tutorCollections.updateOne(query, newTutors, option);
+      //  console.log(result);
+      res.send(result);
+    });
+    app.get("/allTutors", async (req, res) => {
+      const cursor = tutorCollections.find();
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+
+    // Users post
+
+    app.post("/users", async (req, res) => {
+      const user = req.body;
+      // console.log(user);
+      const query = { email: user.email };
+      const existingUser = await usersCollection.findOne(query);
+      if (existingUser) {
+        return res.send({ message: "user already exist", insertedId: null });
+      }
+      const result = await usersCollection.insertOne(user);
+      res.send(result);
+    });
+    app.get("/users", async (req, res) => {
+      const result = await usersCollection.find().toArray();
+      res.send(result);
+    });
+    // agend frud
+    app.get("/users/:email", async (req, res) => {
+      // const isFraud=req.body.isFraud;
+      const email = req.params.email;
+      // console.log(isFraud,email);
+      const query = { email: email };
+      const result = await usersCollection.findOne(query);
+      res.send(result);
+    });
+    app.put("/users/isAdmin/:id", async (req, res) => {
+      const id = req.params.id;
+      // console.log(id);
+      const query = { _id: new ObjectId(id) };
+      const option = { upsert: false };
+      const isAdmin = req.body.isAdmin;
+      // console.log(isTutor);
+      const newAdmin = {
+        $set: {
+          isAdmin,
+        },
+      };
+
+      const result = usersCollection.updateOne(query, newAdmin, option);
+      //  console.log(result);
+      res.send(result);
+    });
+
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
