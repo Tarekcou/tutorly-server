@@ -304,6 +304,30 @@ async function run() {
       //  console.log(result);
       res.send(result);
     });
+    app.put("/tutors/profileUpdate/:id", async (req, res) => {
+      const tutor = req.body;
+      // console.log(tutor);
+      const id = req.params.id;
+      // console.log(id);
+      const query = { _id: new ObjectId(id) };
+      const option = { upsert: false };
+      // console.log(isTutor);
+      const newTutors = {
+        $set: {
+          language: tutor.language,
+          experience: tutor.experience,
+          country: tutor.country,
+          location: tutor.location,
+          age: tutor.age,
+          hourlyRate: tutor.hourlyRate,
+          description: tutor.description,
+        },
+      };
+
+      const result = tutorCollections.updateOne(query, newTutors, option);
+      //  console.log(result);
+      res.send(result);
+    });
     app.delete("/tutors/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
